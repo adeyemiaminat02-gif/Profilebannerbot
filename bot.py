@@ -28,7 +28,7 @@ async def make_banner(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_message(chat_id=chat_id, text="🎨 Generating your banner, please wait...")
 
-    # 1. Create a blank banner canvas (e.g., 800x400 with a gradient or solid background)
+    # 1. Create a blank banner canvas (800x400 with a dark theme)
     banner = Image.new("RGB", (800, 400), color="#1e1e2e")
     draw = ImageDraw.Draw(banner)
 
@@ -36,13 +36,13 @@ async def make_banner(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_photos = await context.bot.get_user_profile_photos(user.id, limit=1)
     
     if user_photos.total_count > 0:
-        # Get the file ID of the largest photo size
+        # Get the file ID of the largest photo size available
         file_id = user_photos.photos[0][-1].file_id
         tg_file = await context.bot.get_file(file_id)
         
-        # Download photo into memory
+        # Download photo directly into bytes memory
         photo_bytes = BytesIO()
-        await tg_file.download_to_memory(out=photo_photos := photo_bytes)
+        await tg_file.download_to_memory(out=photo_bytes)
         photo_bytes.seek(0)
         
         # Open and resize avatar
@@ -52,8 +52,7 @@ async def make_banner(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Paste avatar onto banner canvas
         banner.paste(avatar, (50, 125), avatar if avatar.mode == "RGBA" else None)
 
-    # 3. Draw text (User's First Name)
-    # Note: Default font is used here. You can bundle a .ttf file in your GitHub if you want custom styling.
+    # 3. Draw text using Pillow's default font system
     font = ImageFont.load_default()
     draw.text((230, 170), f"Hello, {user.first_name}!", fill="#cdd6f4", font=font)
     draw.text((230, 210), "Created via Banner Bot", fill="#a6adc8", font=font)
@@ -72,10 +71,10 @@ if __name__ == '__main__':
     # Build the application
     application = ApplicationBuilder().token(BOT_TOKEN).build()
     
-    # Register handlers
+    # Register command handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("makebanner", make_banner))
     
-    # Run the bot in long polling mode (perfect for background workers)
-    print("Bot is starting up...")
+    # Run long polling mode for Render Background Worker
+    print("Bot is starting up successfully...")
     application.run_polling(drop_pending_updates=True)
